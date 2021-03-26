@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Task.belongsTo(models.User, {foreignKey: "userId"})
+      Task.belongsTo(models.User)
     }
   };
   Task.init({
@@ -25,10 +25,21 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     category: DataTypes.STRING,
-    userId: DataTypes.INTEGER
+    userId: {
+      type: DataTypes.INTEGER,
+      references : {
+        model : "User",
+        key : "id"
+      }
+    }
   }, {
     sequelize,
     modelName: 'Task',
+    hooks : {
+      beforeCreate (instance) {
+        instance.category = "backlog"
+      }
+    }
   });
   return Task;
 };

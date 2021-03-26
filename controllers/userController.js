@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken')
 const {User} = require('../models')
 const {comparePassword} = require('../helpers/passwordHelper')
+const {generate, verifyToken} = require('../helpers/verifyToken')
 const {OAuth2Client} = require('google-auth-library')
 
 class userController {
@@ -28,7 +29,7 @@ class userController {
             if(user) {
                 const comparedPassword = comparePassword(password, user.password)
                 if(comparedPassword) {
-                    const access_token = jwt.sign({id: user.id, email: user.email}, process.env.SECRET_KEY)
+                    const access_token = generate({id: user.id, email: user.email}, process.env.SECRET_KEY)
                     res.status(200).json({access_token, id: user.id, email: user.email})
                 } else {
                     throw {msg: 'Invalid email or password'}
@@ -77,6 +78,12 @@ class userController {
             })
         }
         verify().catch(console.table)
+    }
+
+    static currentUser (req, res, next) {
+        const token = req.headers.access_token
+        const data = verifyToken(token)
+        res.status(200).json({data})
     }
 }
 

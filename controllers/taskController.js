@@ -1,9 +1,9 @@
-const {Task} = require('../models')
+const {Task, User} = require('../models')
 
 class taskController {
 
     static findAll(req, res, next) {
-        Task.findAll()
+        Task.findAll({order: [['updatedAt', 'DESC']], include : User})
         .then(data => {
             res.status(200).json({task: data})
         })
@@ -12,16 +12,20 @@ class taskController {
         })
     }
 
-    static findOne(req, res, next) {
+    static edit(req, res, next) {
         let id = +req.params.id
         
         Task.findByPk(id)
-        .then(data => {
-            if(!data) {
-                res.status(404).json({msg: 'No task found'})
-            } else {
-                res.status(200).json({task: data})
+        .then (data => {
+            let currentCategory = data.category
+            let update = {
+                title : req.body.title,
+                category : currentCategory
             }
+            return Task.update(update, {where : {id}, returning:true})
+        })
+        .then (data => {
+            res.status(200).json({data})
         })
         .catch(err => {
             res.status(500).json({msg: 'Internal server error'})
@@ -29,10 +33,10 @@ class taskController {
     }
 
     static create(req, res, next) {
+        const {id} = req.loggedUser
         let task = {
             title: req.body.title,
-            category: 'backlog',
-            userId: req.body.userId
+            userId: id
         }
 
         Task.create(task)
@@ -44,26 +48,84 @@ class taskController {
         })
     }
 
-    static updateCategory(req, res, next) {
-        let id = +req.params.id
-        let newCategory = {
-            category: req.body.category
-        }
+    // static updateCategory(req, res, next) {
+    //     let id = +req.params.id
+    //     let newCategory = {
+    //         category: req.body.category
+    //     }
 
-        Task.update(newCategory, {where: {id: id}})
-        .then(data => {
-            res.status(200).json({msg: 'Task updated successfully'})
+    //     Task.update(newCategory, {where: {id: id}})
+    //     .then(data => {
+    //         res.status(200).json({msg: 'Task updated successfully'})
+    //     })
+    //     .catch(err => {
+    //         res.status(500).json({msg: 'Internal server error'})
+    //     })
+    // }
+
+    static delete(req, res, next) {
+        let id = +req.params.id
+        Task.destroy({where: {id}, returning : true})
+        .then(_=> {
+            res.status(200).json({msg: 'Task deleted successfully'})
         })
         .catch(err => {
             res.status(500).json({msg: 'Internal server error'})
         })
     }
 
-    static delete(req, res, next) {
-        let id = +req.params.id
-        Task.destroy({where: {id: id}})
-        .then(_=> {
-            res.status(200).json({msg: 'Task deleted successfully'})
+    static nextCategory (req, res, next) {
+        let id = req.params.id
+        Task.findByPk(id)
+        .then(data => {
+            let changeCategory;
+            if (data.category === "backlog") {
+                changeCategory = "todo"
+            } else if (data.category === "todo") {
+                changeCategory = "doing"
+            } else if (data.category === "doing") {
+                changeCategory = "completed"
+            } else {
+                changeCategory = data.category
+            }
+
+            let update = {
+                title : data.title,
+                category : changeCategory
+            }
+            return Task.update(update, {where : {id}, returning:true})
+        })
+        .then(data => {
+            res.status(200).json({data})
+        })
+        .catch(err => {
+            res.status(500).json({msg: 'Internal server error'})
+        })
+    }
+
+    static previousCategory (req, res, next) {
+        let id = req.params.id
+        Task.findByPk(id)
+        .then(data => {
+            let changeCategory;
+            if (data.category === "todo") {
+                changeCategory = "backlog"
+            } else if (data.category === "doing") {
+                changeCategory = "todo"
+            } else if (data.category === "completed") {
+                changeCategory = "doing"
+            } else {
+                changeCategory = data.category
+            }
+
+            let update = {
+                title : data.title,
+                category : changeCategory
+            }
+            return Task.update(update, {where : {id}, returning:true})
+        })
+        .then(data => {
+            res.status(200).json({data})
         })
         .catch(err => {
             res.status(500).json({msg: 'Internal server error'})
