@@ -8,6 +8,7 @@ List of available endpoints:
 - `POST /googleLogin`
 - `GET /tasks`
 - `GET /tasks/id`
+- `PUT /tasks/id`
 - `POST /tasks`
 - `PATCH /tasks/id`
 - `DELETE /tasks/id`
@@ -195,12 +196,47 @@ _Request Body_
 {
   "title": 'string',
   "category": 'string',
-  "userId": 'string'
+  "userId": 'integer'
 }
 
 ```
 
 _Response (201 - Created)_
+```
+{
+    'Task': {
+        "id": 'integer',
+        "title": 'string',
+        "category": 'string',
+        "userId": 'integer',
+        "due_date": 'date'
+    }
+}
+```
+
+---
+### PUT /tasks/id
+
+> Edit existing task
+
+_Request Header_
+```
+{
+  'access_token': 'access_token'
+}
+```
+
+_Request Body_
+```
+{
+  "title": 'string',
+  "category": 'string',
+  "userId": 'integer'
+}
+
+```
+
+_Response (200)_
 ```
 {
     'Task': {
